@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>X Fitness</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <!-- GSAP CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <!-- Font Awesome cho icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    /* ===== CSS toàn bộ ===== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0A0A0A;
+      --accent: #E63946;
+      --text: #FFFFFF;
+      --surface: #1A1A1A;
+      --card: #242424;
+      --muted: #A0A0A0;
+      --success: #2ECC71;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      height: 100vh;
+      user-select: none;
+    }
+    /* Splash */
+    .splash {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: var(--bg); display: flex; align-items: center; justify-content: center;
+      z-index: 9999;
+    }
+    .splash .logo-xf {
+      display: flex; gap: 0px; font-size: 5rem; font-weight: 900;
+      color: var(--text);
+    }
+    .splash .logo-xf span { display: inline-block; }
+    /* Auth */
+    .auth-container {
+      display: none; position: fixed; top:0;left:0;width:100%;height:100%;
+      background: var(--bg); z-index: 9998; align-items: center; justify-content: center;
+    }
+    .auth-box {
+      background: var(--surface); padding: 2rem; border-radius: 16px;
+      width: 90%; max-width: 400px; text-align: center;
+    }
+    .auth-box input {
+      width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #333;
+      border-radius: 8px; background: #111; color: white;
+    }
+    .btn {
+      background: var(--accent); color: white; border: none; padding: 12px 24px;
+      border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s;
+    }
+    .btn:hover { opacity: 0.8; }
+    .btn-outline {
+      background: transparent; border: 1px solid var(--accent); color: var(--accent);
+    }
+    /* App container */
+    .app {
+      display: none; height: 100vh; flex-direction: column;
+    }
+    /* Header */
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px; background: var(--surface);
+      border-bottom: 1px solid #2A2A2A;
+    }
+    .header .logo-small {
+      font-size: 1.5rem; font-weight: 900; color: var(--accent);
+      display: flex; gap: 2px;
+    }
+    /* Tab bar */
+    .tab-content {
+      flex: 1; overflow-y: auto; padding: 16px;
+    }
+    .bottom-nav {
+      display: flex; background: var(--surface); border-top: 1px solid #2A2A2A;
+      padding: 8px 0;
+    }
+    .bottom-nav .nav-item {
+      flex: 1; text-align: center; color: var(--muted); padding: 8px 0;
+      cursor: pointer; transition: 0.2s;
+    }
+    .bottom-nav .nav-item.active { color: var(--accent); }
+    .bottom-nav .nav-item i { font-size: 1.4rem; display: block; }
+    .bottom-nav .nav-item span { font-size: 0.7rem; }
+    /* Cards */
+    .card {
+      background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 16px;
+    }
+    .streak-banner {
+      background: linear-gradient(135deg, var(--accent), #ff6b6b);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .workout-card { border-left: 4px solid var(--accent); }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .technique-card img { width: 100%; border-radius: 8px; height: 100px; object-fit: cover; }
+    .chip {
+      display: inline-block; padding: 6px 12px; margin: 4px; background: #333;
+      border-radius: 20px; font-size: 0.8rem; cursor: pointer;
+    }
+    .chip.active { background: var(--accent); }
+    .flip-clock {
+      font-size: 3rem; font-weight: 700; background: #111; padding: 8px 16px;
+      border-radius: 8px; display: inline-block; font-variant-numeric: tabular-nums;
+    }
+    .modal {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: var(--surface); border-radius: 12px; padding: 24px; width: 90%; max-width: 500px;
+    }
+    .timeline { display: flex; overflow-x: auto; gap: 12px; }
+    .timeline-dot {
+      width: 40px; height: 40px; border-radius: 50%; background: #333;
+      display: flex; align-items: center; justify-content: center; font-size: 0.8rem;
+    }
+    .timeline-dot.done { background: var(--success); }
+    .timeline-dot.today { border: 2px solid var(--accent); }
+    .radar-chart { width: 200px; height: 200px; margin: 0 auto; }
+    /* Responsive */
+    @media (max-width: 600px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+    /* Class để ẩn/hiện */
+    .hidden { display: none !important; }
+    .flex { display: flex; }
+  </style>
+</head>
+<body>
+  <!-- SPLASH -->
+  <div class="splash" id="splash">
+    <div class="logo-xf" id="logoXF">
+      <span>X</span><span>F</span>
+    </div>
+  </div>
+
+  <!-- AUTH -->
+  <div class="auth-container" id="authContainer">
+    <div class="auth-box" id="loginBox">
+      <h2>Đăng nhập</h2>
+      <input type="email" placeholder="Email" id="loginEmail">
+      <input type="password" placeholder="Mật khẩu" id="loginPassword">
+      <button class="btn" onclick="login()">Đăng nhập</button>
+      <p style="margin-top:12px">Chưa có tài khoản? <a href="#" onclick="showRegister()">Đăng ký</a></p>
+    </div>
+    <div class="auth-box hidden" id="registerBox">
+      <h2>Đăng ký</h2>
+      <input type="email" placeholder="Email" id="regEmail">
+      <input type="password" placeholder="Mật khẩu" id="regPassword">
+      <input type="text" placeholder="Tên hiển thị" id="regName">
+      <button class="btn" onclick="register()">Đăng ký</button>
+      <p style="margin-top:12px">Đã có tài khoản? <a href="#" onclick="showLogin()">Đăng nhập</a></p>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div class="app" id="app">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo-small"><span>X</span><span style="margin-left:2px">F</span></div>
+      <div>
+        <i class="fa-solid fa-bell" style="margin-right:12px; color:var(--muted)"></i>
+        <i class="fa-solid fa-gear" style="color:var(--muted); cursor:pointer" onclick="logout()"></i>
+      </div>
+    </div>
+
+    <!-- Tab nội dung -->
+    <div class="tab-content" id="tabContent"></div>
+
+    <!-- Bottom Nav -->
+    <div class="bottom-nav">
+      <div class="nav-item active" data-tab="home"><i class="fa-solid fa-house"></i><span>Home</span></div>
+      <div class="nav-item" data-tab="programs"><i class="fa-solid fa-fire"></i><span>Programs</span></div>
+      <div class="nav-item" data-tab="library"><i class="fa-solid fa-book"></i><span>Library</span></div>
+      <div class="nav-item" data-tab="freestyle"><i class="fa-solid fa-bolt"></i><span>Freestyle</span></div>
+      <div class="nav-item" data-tab="profile"><i class="fa-solid fa-user"></i><span>Profile</span></div>
+    </div>
+  </div>
+
+  <!-- MODAL container -->
+  <div class="modal" id="modal"></div>
+
+  <script>
+    // ===== GLOBAL STATE =====
+    let currentUser = null;
+    let userData = {
+      schedule: null, // { days: ['Mon','Wed','Fri'], goal: 'build_muscle', level: 'beginner', equipment: false }
+      streak: 0,
+      lastWorkoutDate: null,
+      achievements: [],
+      history: [],
+      bodyMetrics: [],
+      strengthTest: null,
+      freestyleExercises: [],
+      currentProgram: null, // { type: '30day', name: 'Six Pack', startDate, currentDay }
+    };
+
+    // Dữ liệu bài tập mẫu (thư viện)
+    const exercises = [
+      { id: 1, name: 'Push Up', category: 'push', muscle: 'Chest', difficulty: 'Beginner', equipment: false, video: 'https://www.youtube.com/embed/bt5b9x7q0wM', tips: 'Keep body straight, lower chest to ground.', mistakes: 'Sagging hips, flaring elbows.' },
+      { id: 2, name: 'Pull Up', category: 'pull', muscle: 'Back', difficulty: 'Intermediate', equipment: true, video: 'https://www.youtube.com/embed/eGo4IYlbE5g', tips: 'Pull from back, chin over bar.', mistakes: 'Kipping, not full range.' },
+      { id: 3, name: 'Squat', category: 'legs', muscle: 'Legs', difficulty: 'Beginner', equipment: false, video: 'https://www.youtube.com/embed/acx5H8nO5kE', tips: 'Keep heels down, back straight.', mistakes: 'Knees going inward.' },
+      { id: 4, name: 'Plank', category: 'core', muscle: 'Core', difficulty: 'Beginner', equipment: false, video: 'https://www.youtube.com/embed/pvIjsG_7K5c', tips: 'Body in straight line.', mistakes: 'Hips too high or sagging.' },
+      { id: 5, name: 'Dip', category: 'push', muscle: 'Triceps', difficulty: 'Intermediate', equipment: true, video: 'https://www.youtube.com/embed/2z8JmVLz3fc', tips: 'Keep elbows in.', mistakes: 'Leaning too forward.' },
+      { id: 6, name: 'Burpee', category: 'fullbody', muscle: 'Full Body', difficulty: 'Advanced', equipment: false, video: 'https://www.youtube.com/embed/7UuU49C4e0M', tips: 'Explosive jump.', mistakes: 'Not jumping high enough.' },
+    ];
+
+    // Hàm khởi tạo
+    window.onload = () => {
+      // Splash animation
+      gsap.set('#splash .logo-xf span:first-child', { x: 0, rotation: 0 });
+      gsap.set('#splash .logo-xf span:last-child', { x: 0, rotation: 0 });
+      const tl = gsap.timeline({ onComplete: () => {
+        document.getElementById('splash').classList.add('hidden');
+        // Kiểm tra đăng nhập
+        if (localStorage.getItem('xfit_user')) {
+          currentUser = JSON.parse(localStorage.getItem('xfit_user'));
+          loadUserData();
+          showApp();
+        } else {
+          showAuth();
+        }
+      }});
+      tl.fromTo('#splash .logo-xf span:first-child', { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.3 })
+        .to('#splash .logo-xf span:first-child', { x: -3, duration: 0.3 })
+        .to('#splash .logo-xf span:last-child', { x: 3, duration: 0.3 }, '-=0.3')
+        .to('#splash', { background: 'radial-gradient(circle at center, rgba(230,57,70,0.8) 0%, transparent 70%)', duration: 0.2 }, '-=0.1')
+        .to('#splash', { background: '#0A0A0A', duration: 0.2 })
+        .to('#splash .logo-xf span:first-child', { rotation: -7, scale: 1.05, duration: 0.2 })
+        .to('#splash .logo-xf span:last-child', { rotation: 7, scale: 1.05, duration: 0.2 }, '-=0.2')
+        .to('#splash .logo-xf span:first-child', { rotation: 0, scale: 1, duration: 0.2 })
+        .to('#splash .logo-xf span:last-child', { rotation: 0, scale: 1, duration: 0.2 }, '-=0.2')
+        .to('#splash', { opacity: 0, duration: 0.3 }, '+=0.2');
+    };
+
+    function showAuth() {
+      document.getElementById('authContainer').style.display = 'flex';
+    }
+    function showLogin() {
+      document.getElementById('loginBox').classList.remove('hidden');
+      document.getElementById('registerBox').classList.add('hidden');
+    }
+    function showRegister() {
+      document.getElementById('loginBox').classList.add('hidden');
+      document.getElementById('registerBox').classList.remove('hidden');
+    }
+    // Auth
+    function register() {
+      const email = document.getElementById('regEmail').value;
+      const password = document.getElementById('regPassword').value;
+      const name = document.getElementById('regName').value;
+      if (!email || !password) return alert('Vui lòng điền đầy đủ');
+      currentUser = { email, name, password };
+      localStorage.setItem('xfit_user', JSON.stringify(currentUser));
+      userData = { ...userData };
+      saveUserData();
+      document.getElementById('authContainer').style.display = 'none';
+      showApp();
+    }
+    function login() {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      const stored = localStorage.getItem('xfit_user');
+      if (stored) {
+        const user = JSON.parse(stored);
+        if (user.email === email && user.password === password) {
+          currentUser = user;
+          loadUserData();
+          document.getElementById('authContainer').style.display = 'none';
+          showApp();
+        } else {
+          alert('Sai email hoặc mật khẩu');
+        }
+      } else {
+        alert('Chưa có tài khoản, vui lòng đăng ký');
+      }
+    }
+    function logout() {
+      localStorage.removeItem('xfit_user');
+      currentUser = null;
+      document.getElementById('app').style.display = 'none';
+      showAuth();
+    }
+    function showApp() {
+      document.getElementById('app').style.display = 'flex';
+      renderTab('home');
+      setupNavListeners();
+    }
+    function setupNavListeners() {
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', function() {
+          document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+          this.classList.add('active');
+          renderTab(this.dataset.tab);
+        });
+      });
+    }
+    function saveUserData() {
+      localStorage.setItem('xfit_data_' + currentUser.email, JSON.stringify(userData));
+    }
+    function loadUserData() {
+      const saved = localStorage.getItem('xfit_data_' + currentUser.email);
+      if (saved) userData = JSON.parse(saved);
+    }
+    // Render tab
+    function renderTab(tab) {
+      const container = document.getElementById('tabContent');
+      container.innerHTML = '';
+      switch(tab) {
+        case 'home': renderHome(container); break;
+        case 'programs': renderPrograms(container); break;
+        case 'library': renderLibrary(container); break;
+        case 'freestyle': renderFreestyle(container); break;
+        case 'profile': renderProfile(container); break;
+      }
+    }
+    // ========== HOME ==========
+    function renderHome(container) {
+      // Streak
+      const today = new Date().toDateString();
+      if (userData.lastWorkoutDate === today) {
+        // đã tập hôm nay
+      }
+      container.innerHTML = `
+        <div class="card streak-banner">
+          <div>
+            <h3>🔥 ${userData.streak} Ngày liên tiếp</h3>
+            <p>Giữ vững phong độ!</p>
+          </div>
+          <div style="font-size:2rem; font-weight:700">${userData.streak}</div>
+        </div>
+        <div class="card workout-card">
+          <h3>Hôm nay: ${getTodayWorkout()}</h3>
+          <p>Bài tập: Push Up, Squat, Plank</p>
+          <button class="btn" onclick="startWorkout()">Bắt đầu tập</button>
+        </div>
+        <div class="card">
+          <h4>Quick Freestyle</h4>
+          <div class="grid-2">
+            ${exercises.slice(0,4).map(ex => `
+              <div class="technique-card" onclick="startFreestyleExercise(${ex.id})">
+                <img src="https://source.unsplash.com/featured/?fitness,${ex.name}" alt="${ex.name}">
+                <p>${ex.name}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        <button class="btn btn-outline" onclick="openScheduleBuilder()">Tạo lịch tập</button>
+      `;
+    }
+    function getTodayWorkout() {
+      // Giả lập: trả về loại tập theo ngày trong tuần
+      const d = new Date().getDay();
+      return ['Push', 'Pull', 'Legs', 'Push', 'Pull', 'Legs', 'Rest'][d];
+    }
+    function startWorkout() {
+      // Mở modal workout player với bài tập mẫu
+      openWorkoutPlayer(['Push Up', 'Squat', 'Plank']);
+    }
+    function startFreestyleExercise(id) {
+      const ex = exercises.find(e => e.id === id);
+      openWorkoutPlayer([ex.name]);
+    }
+    // ========== WORKOUT PLAYER ==========
+    function openWorkoutPlayer(exerciseList) {
+      const modal = document.getElementById('modal');
+      modal.innerHTML = `
+        <div class="modal-content" style="max-width:800px">
+          <div style="display:flex; justify-content:space-between">
+            <h2>Workout</h2>
+            <button class="btn btn-outline" onclick="closeModal()">X</button>
+          </div>
+          <div id="playerVideo" style="width:100%; height:300px; background:#000"></div>
+          <div class="flip-clock" id="flipClock">00:30</div>
+          <div style="margin:16px 0">
+            <p>Bài tập hiện tại: <span id="currentExName">${exerciseList[0]}</span></p>
+            <p>Còn lại: <span id="remainingEx">${exerciseList.length-1}</span></p>
+          </div>
+          <button class="btn" id="nextExBtn">Tiếp theo</button>
+          <button class="btn btn-outline" onclick="completeWorkout()">Kết thúc</button>
+        </div>
+      `;
+      modal.style.display = 'flex';
+      let currentIndex = 0;
+      let timer = 30;
+      const flipClock = document.getElementById('flipClock');
+      const currentExName = document.getElementById('currentExName');
+      const remainingEx = document.getElementById('remainingEx');
+      const nextBtn = document.getElementById('nextExBtn');
+      const playerVideo = document.getElementById('playerVideo');
+      function updateTimerDisplay() {
+        flipClock.textContent = `00:${timer < 10 ? '0' + timer : timer}`;
+      }
+      updateTimerDisplay();
+      const interval = setInterval(() => {
+        if (timer > 0) {
+          timer--;
+          updateTimerDisplay();
+        }
+      }, 1000);
+      // Load video tương ứng
+      const ex = exercises.find(e => e.name === exerciseList[currentIndex]);
+      if (ex) {
+        playerVideo.innerHTML = `<iframe width="100%" height="100%" src="${ex.video}?autoplay=1" frameborder="0" allowfullscreen></iframe>`;
+      }
+      nextBtn.onclick = () => {
+        currentIndex++;
+        if (currentIndex < exerciseList.length) {
+          timer = 30;
+          currentExName.textContent = exerciseList[currentIndex];
+          remainingEx.textContent = exerciseList.length - currentIndex - 1;
+          updateTimerDisplay();
+          const exNext = exercises.find(e => e.name === exerciseList[currentIndex]);
+          if (exNext) playerVideo.innerHTML = `<iframe width="100%" height="100%" src="${exNext.video}?autoplay=1" frameborder="0" allowfullscreen></iframe>`;
+        } else {
+          completeWorkout();
+        }
+      };
+      window.completeWorkout = () => {
+        clearInterval(interval);
+        modal.style.display = 'none';
+        // Cập nhật streak
+        const today = new Date().toDateString();
+        if (userData.lastWorkoutDate !== today) {
+          userData.streak++;
+          userData.lastWorkoutDate = today;
+          if (userData.streak % 7 === 0) userData.achievements.push(`${userData.streak}day`);
+          saveUserData();
+        }
+        renderTab('home');
+      };
+    }
+    function closeModal() {
+      document.getElementById('modal').style.display = 'none';
+    }
+    // ========== SCHEDULE BUILDER ==========
+    function openScheduleBuilder() {
+      const modal = document.getElementById('modal');
+      modal.innerHTML = `
+        <div class="modal-content">
+          <h2>Tạo lịch tập</h2>
+          <div id="scheduleStep1">
+            <p>Chọn số ngày tập mỗi tuần:</p>
+            <input type="range" min="2" max="6" value="3" id="daysSlider">
+            <span id="daysValue">3</span> ngày
+            <button class="btn" onclick="nextScheduleStep(2)">Tiếp</button>
+          </div>
+          <div id="scheduleStep2" class="hidden">
+            <p>Mục tiêu:</p>
+            <select id="goalSelect">
+              <option value="build_muscle">Tăng cơ</option>
+              <option value="lose_fat">Giảm mỡ</option>
+              <option value="skills">Kỹ năng Calisthenics</option>
+              <option value="maintain">Duy trì</option>
+            </select>
+            <button class="btn" onclick="nextScheduleStep(3)">Tiếp</button>
+          </div>
+          <div id="scheduleStep3" class="hidden">
+            <p>Cấp độ:</p>
+            <select id="levelSelect">
+              <option value="beginner">Mới bắt đầu</option>
+              <option value="intermediate">Trung bình</option>
+              <option value="advanced">Nâng cao</option>
+            </select>
+            <button class="btn" onclick="nextScheduleStep(4)">Tiếp</button>
+          </div>
+          <div id="scheduleStep4" class="hidden">
+            <p>Có dụng cụ không?</p>
+            <input type="checkbox" id="equipmentCheck"> Có xà, tạ...
+            <button class="btn" onclick="generateSchedule()">Xác nhận</button>
+          </div>
+        </div>
+      `;
+      document.getElementById('modal').style.display = 'flex';
+      document.getElementById('daysSlider').oninput = function() {
+        document.getElementById('daysValue').textContent = this.value;
+      };
+      window.nextScheduleStep = (step) => {
+        document.querySelectorAll('[id^="scheduleStep"]').forEach(el => el.classList.add('hidden'));
+        document.getElementById('scheduleStep'+step).classList.remove('hidden');
+      };
+      window.generateSchedule = () => {
+        const days = parseInt(document.getElementById('daysSlider').value);
+        const goal = document.getElementById('goalSelect').value;
+        const level = document.getElementById('levelSelect').value;
+        const equipment = document.getElementById('equipmentCheck').checked;
+        // Tạo lịch đơn giản: phân bổ push/pull/legs xen kẽ
+        const weekDays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+        const schedule = [];
+        for (let i = 0; i < days; i++) schedule.push(weekDays[i]);
+        userData.schedule = { days: schedule, goal, level, equipment };
+        saveUserData();
+        closeModal();
+        alert('Đã tạo lịch tập!');
+        renderTab('home');
+      };
+    }
+    // ========== LIBRARY ==========
+    function renderLibrary(container) {
+      container.innerHTML = `
+        <input type="text" placeholder="Tìm kiếm động tác..." id="searchInput" oninput="filterExercises()" style="width:100%; padding:12px; background:#111; border:1px solid #333; border-radius:8px; color:white; margin-bottom:16px">
+        <div id="filterChips">
+          <span class="chip active" data-cat="all">All</span>
+          <span class="chip" data-cat="push">Push</span>
+          <span class="chip" data-cat="pull">Pull</span>
+          <span class="chip" data-cat="legs">Legs</span>
+          <span class="chip" data-cat="core">Core</span>
+          <span class="chip" id="noEquipFilter" onclick="toggleNoEquipment()">🚫 No Equipment</span>
+        </div>
+        <div class="grid-2" id="exerciseGrid"></div>
+      `;
+      window.currentFilter = 'all';
+      window.noEquipmentOnly = false;
+      document.querySelectorAll('#filterChips .chip[data-cat]').forEach(chip => {
+        chip.addEventListener('click', function() {
+          document.querySelectorAll('#filterChips .chip[data-cat]').forEach(c => c.classList.remove('active'));
+          this.classList.add('active');
+          window.currentFilter = this.dataset.cat;
+          filterExercises();
+        });
+      });
+      filterExercises();
+    }
+    function filterExercises() {
+      const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
+      const grid = document.getElementById('exerciseGrid');
+      if (!grid) return;
+      let filtered = exercises.filter(ex => {
+        const matchSearch = ex.name.toLowerCase().includes(search);
+        const matchCat = window.currentFilter === 'all' || ex.category === window.currentFilter;
+        const matchEquip = !window.noEquipmentOnly || !ex.equipment;
+        return matchSearch && matchCat && matchEquip;
+      });
+      grid.innerHTML = filtered.map(ex => `
+        <div class="technique-card" onclick="openExerciseDetail(${ex.id})">
+          <img src="https://source.unsplash.com/featured/?fitness,${ex.name}" alt="${ex.name}">
+          <p>${ex.name} ${ex.equipment ? '' : '<span style="color:var(--success)">🚫</span>'}</p>
+        </div>
+      `).join('');
+      gsap.fromTo('.technique-card', { opacity:0, scale:0.8 }, { opacity:1, scale:1, stagger:0.05, duration:0.3 });
+    }
+    function toggleNoEquipment() {
+      window.noEquipmentOnly = !window.noEquipmentOnly;
+      document.getElementById('noEquipFilter').classList.toggle('active', window.noEquipmentOnly);
+      filterExercises();
+    }
+    function openExerciseDetail(id) {
+      const ex = exercises.find(e => e.id === id);
+      const modal = document.getElementById('modal');
+      modal.innerHTML = `
+        <div class="modal-content">
+          <h2>${ex.name}</h2>
+          <iframe width="100%" height="250" src="${ex.video}" frameborder="0" allowfullscreen></iframe>
+          <div style="display:flex; gap:8px; margin:12px 0">
+            <button class="btn" id="tabDemo">Demo</button>
+            <button class="btn btn-outline" id="tabAnalysis">Phân tích</button>
+          </div>
+          <div id="exDetailContent">
+            <p><strong>Mẹo:</strong> ${ex.tips}</p>
+            <p><strong>Lỗi sai:</strong> ${ex.mistakes}</p>
+          </div>
+          <button class="btn" onclick="closeModal()">Đóng</button>
+        </div>
+      `;
+      modal.style.display = 'flex';
+      document.getElementById('tabDemo').onclick = () => {
+        document.getElementById('exDetailContent').innerHTML = `<p><strong>Mẹo:</strong> ${ex.tips}</p><p><strong>Lỗi sai:</strong> ${ex.mistakes}</p>`;
+      };
+      document.getElementById('tabAnalysis').onclick = () => {
+        document.getElementById('exDetailContent').innerHTML = `<p><strong>Phân tích chuyên sâu:</strong> Video phân tích sẽ xuất hiện ở đây. (Giả lập)</p>`;
+      };
+    }
+    // ========== PROGRAMS ==========
+    function renderPrograms(container) {
+      container.innerHTML = `
+        <h2>Lộ trình 30 ngày</h2>
+        <div class="card" onclick="openProgram('sixpack')">
+          <h3>Six Pack in 30 Days</h3>
+          <p>Mỗi ngày một bài tập bụng</p>
+          <div class="timeline" id="sixpackTimeline"></div>
+        </div>
+        <h2>Khóa dài hạn</h2>
+        <div class="card">
+          <h3>Beginner to Pro (8 tuần)</h3>
+          <p>Calisthenics toàn diện</p>
+          <button class="btn btn-outline">Sắp ra mắt</button>
+        </div>
+      `;
+      // Vẽ timeline cho sixpack (giả định)
+      const timelineDiv = document.getElementById('sixpackTimeline');
+      for (let i = 1; i <= 30; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'timeline-dot';
+        dot.textContent = i;
+        if (i <= userData.streak) dot.classList.add('done');
+        if (i === userData.streak + 1) dot.classList.add('today');
+        timelineDiv.appendChild(dot);
+      }
+    }
+    function openProgram(type) {
+      // Tương tự mở chương trình, ở đây hiện tại chưa có dữ liệu sâu
+      alert('Chương trình đang phát triển');
+    }
+    // ========== FREESTYLE ==========
+    function renderFreestyle(container) {
+      container.innerHTML = `
+        <h2>Tạo buổi tập tự do</h2>
+        <div class="grid-2" id="freestyleSelect">
+          ${exercises.map(ex => `
+            <div class="technique-card" data-id="${ex.id}">
+              <img src="https://source.unsplash.com/featured/?fitness,${ex.name}" alt="${ex.name}">
+              <p>${ex.name} <button class="btn btn-outline" style="float:right" onclick="addToFreestyle(${ex.id})">+</button></p>
+            </div>
+          `).join('')}
+        </div>
+        <h3>Danh sách đã chọn (<span id="freestyleCount">0</span>)</h3>
+        <div id="freestyleList"></div>
+        <button class="btn" onclick="startFreestyleWorkout()">Bắt đầu Freestyle</button>
+      `;
+      window.freestyleList = [];
+    }
+    function addToFreestyle(id) {
+      const ex = exercises.find(e => e.id === id);
+      if (!window.freestyleList.includes(ex)) {
+        window.freestyleList.push(ex);
+        updateFreestyleUI();
+      }
+    }
+    function updateFreestyleUI() {
+      document.getElementById('freestyleCount').textContent = window.freestyleList.length;
+      document.getElementById('freestyleList').innerHTML = window.freestyleList.map(e => `<p>${e.name} <span onclick="removeFreestyle(${e.id})" style="color:red; cursor:pointer">X</span></p>`).join('');
+    }
+    function removeFreestyle(id) {
+      window.freestyleList = window.freestyleList.filter(e => e.id !== id);
+      updateFreestyleUI();
+    }
+    function startFreestyleWorkout() {
+      if (window.freestyleList.length === 0) return alert('Chọn ít nhất một bài tập');
+      const names = window.freestyleList.map(e => e.name);
+      openWorkoutPlayer(names);
+    }
+    // ========== PROFILE ==========
+    function renderProfile(container) {
+      container.innerHTML = `
+        <h2>${currentUser.name || 'Người dùng'}</h2>
+        <p>Streak: ${userData.streak} ngày</p>
+        <div class="card" onclick="openStrengthTest()">
+          <h3>Chỉ số sức mạnh</h3>
+          <p>${userData.strengthTest ? 'Xem biểu đồ' : 'Bắt đầu kiểm tra'}</p>
+        </div>
+        <div class="card" onclick="openAchievements()">
+          <h3>Thành tích</h3>
+          <p>${userData.achievements.length} huy hiệu</p>
+        </div>
+        <div class="card" onclick="openBodyReport()">
+          <h3>Báo cáo cơ thể</h3>
+          <p>BMI, cân nặng</p>
+        </div>
+        <div class="card" onclick="openReminderSettings()">
+          <h3>Nhắc nhở</h3>
+          <p>Cài đặt thời gian</p>
+        </div>
+        <button class="btn btn-outline" onclick="logout()">Đăng xuất</button>
+      `;
+    }
+    function openStrengthTest() {
+      const modal = document.getElementById('modal');
+      modal.innerHTML = `
+        <div class="modal-content">
+          <h2>Kiểm tra sức mạnh</h2>
+          <p>Hít đất tối đa: <input type="number" id="pushupMax"></p>
+          <p>Kéo xà tối đa: <input type="number" id="pullupMax"></p>
+          <p>Plank tối đa (giây): <input type="number" id="plankMax"></p>
+          <button class="btn" onclick="saveStrengthTest()">Lưu</button>
+        </div>
+      `;
+      modal.style.display = 'flex';
+    }
+    function saveStrengthTest() {
+      const push = parseInt(document.getElementById('pushupMax').value) || 0;
+      const pull = parseInt(document.getElementById('pullupMax').value) || 0;
+      const plank = parseInt(document.getElementById('plankMax').value) || 0;
+      userData.strengthTest = { push, pull, plank };
+      saveUserData();
+      closeModal();
+      alert('Đã lưu!');
+    }
+    function openAchievements() {
+      const modal = document.getElementById('modal');
+      modal.innerHTML = `
+        <div class="modal-content">
+          <h2>Bộ sưu tập huy hiệu</h2>
+          <div class="grid-2">
+            ${[3,7,14,21,30].map(day => `
+              <div class="card" style="text-align:center">
+                <i class="fa-solid fa-medal" style="font-size:2rem; color:${userData.streak >= day ? 'var(--accent)' : '#555'}"></i>
+                <p>${day} ngày</p>
+              </div>
+            `).join('')}
+          </div>
+          <button class="btn" onclick="closeModal()">Đóng</button>
+        </div>
+      `;
+      modal.style.display = 'flex';
+    }
+    function openBodyReport() {
+      const modal = document.getElementById('modal');
+      modal.innerHTML = `
+        <div class="modal-content">
+          <h2>Báo cáo cơ thể</h2>
+          <p>Cân nặng (kg): <input type="number" id="weightInput"></p>
+          <p>Vòng eo (cm): <input type="number" id="waistInput"></p>
+          <p>Vòng hông (cm): <input type="number" id="hipInput"></p>
+          <button class="btn" onclick="saveBodyMetrics()">Lưu</button>
+          <div id="bmiResult"></div>
+        </div>
+      `;
+      modal.style.display = 'flex';
+    }
+    function saveBodyMetrics() {
+      const w = parseFloat(document.getElementById('weightInput').value);
+      const waist = parseFloat(document.getElementById('waistInput').value);
+      const hip = parseFloat(document.getElementById('hipInput').value);
+      if (w && waist && hip) {
+        const bmi = w / ((170/100)**2); // giả sử chiều cao 1m7
+        document.getElementById('bmiResult').innerHTML = `<p>BMI: ${bmi.toFixed(1)} - ${bmi < 18.5 ? 'Gầy' : bmi < 25 ? 'Bình thường' : 'Thừa cân'}</p>`;
+      }
+    }
+    function openReminderSettings() {
+      // Giả lập
+      alert('Tính năng nhắc nhở sẽ có trong phiên bản tiếp theo.');
+    }
+  </script>
+</body>
+</html>
